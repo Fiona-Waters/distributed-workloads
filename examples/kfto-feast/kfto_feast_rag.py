@@ -19,15 +19,15 @@ class FeastRAGRetriever(RagRetriever):
         self.feast = FeatureStore(repo_path=feast_repo_path)
         self.milvus_collection = Collection(name=milvus_collection_name)
 
-    def retrieve(self, question_hidden_states, n_docs):
+    def retrieve(self, question_hidden_states: np.ndarray, n_docs: int):
         # Retrieve top-k documents using Milvus and Feast, returning in HF compatible RAG format.
         
         # Convert to numpy 
-        query_embeddings = question_hidden_states.detach().cpu().numpy()
+        # query_embeddings = question_hidden_states.detach().cpu().numpy()
         
         # Perform search in Milvus
         search_results = self.milvus_collection.search(
-            data=query_embeddings,
+            data=question_hidden_states,
             anns_field="vector", # update this to name of vector field
             param={"metric_type": "IP", "params": {"nprobe": 10}},
             limit=n_docs,
@@ -80,14 +80,14 @@ class FeastRAGRetriever(RagRetriever):
             "doc_scores": torch.stack(doc_scores)
         }
 
-    def retrieve_simple(self, question_hidden_states, n_docs):
+    def retrieve_simple(self, question_hidden_states: np.ndarray, n_docs: int):
         # Retrieve top-k documents using Milvus and Feast, returning a simple dictionary.
         # Convert to numpy 
-        query_embeddings = question_hidden_states.detach().cpu().numpy()
+        # query_embeddings = question_hidden_states.detach().cpu().numpy()
 
         # Perform search in Milvus
         search_results = self.milvus_collection.search(
-            data=query_embeddings,
+            data=question_hidden_states,
             anns_field="vector", # update this to name of vector field
             param={"metric_type": "IP", "params": {"nprobe": 10}},
             limit=n_docs,
