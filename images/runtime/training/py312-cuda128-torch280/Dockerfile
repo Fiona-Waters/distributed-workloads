@@ -84,7 +84,7 @@ RUN micropipenv install -- --no-cache-dir && \
 
 # Install Flash Attention
 RUN pip install wheel
-RUN pip install --no-cache-dir flash-attn==2.7.4.post1 --no-build-isolation
+RUN pip install --no-cache-dir flash-attn==2.8.3 --no-build-isolation
 
 # Upgrade NCCL to a more recent version and add Training Hub NVIDIA dependencies
 RUN pip install \
