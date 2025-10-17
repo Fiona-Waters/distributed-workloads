@@ -71,20 +71,6 @@ RUN dnf install -y --disablerepo="*" --enablerepo="cuda-rhel9-x86_64,mlnx_ofed_2
     && dnf clean all \
     && rm -rf /var/cache/dnf/*
 
-# Install Python packages
-
-# Install micropipenv to deploy packages from Pipfile.lock
-RUN pip install --no-cache-dir -U "micropipenv[toml]"
-
-# Install Python dependencies from Pipfile.lock file
-COPY Pipfile.lock ./
-
-RUN micropipenv install -- --no-cache-dir && \
-    rm -f ./Pipfile.lock && \
-    # Fix permissions to support pip in OpenShift environments \
-    chmod -R g+w /opt/app-root/lib/python3.12/site-packages && \
-    fix-permissions /opt/app-root -P
-
 # Upgrade NCCL to a more recent version and add Training Hub NVIDIA dependencies
 RUN pip install \
     nvidia-nccl-cu12==2.27.3 \
@@ -101,7 +87,46 @@ RUN pip install \
     nvidia-cusparselt-cu12==0.7.1 \
     nvidia-nvjitlink-cu12==12.8.93 \
     nvidia-nvtx-cu12==12.8.90 \
- && fix-permissions /opt/app-root -P
+    nvidia-nvshmem-cu12==3.4.5 \
+    && fix-permissions /opt/app-root -P
+
+# Add ALL pip-installed NVIDIA library paths to LD_LIBRARY_PATH for building packages that require CUDA
+# This is needed because packages like causal-conv1d need to import PyTorch during build,
+# and PyTorch requires these CUDA libraries which were installed via pip (not the system CUDA from dnf)
+ENV LD_LIBRARY_PATH="/opt/app-root/lib/python3.12/site-packages/nvidia/cudnn/lib:\
+/opt/app-root/lib/python3.12/site-packages/nvidia/cublas/lib:\
+/opt/app-root/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:\
+/opt/app-root/lib/python3.12/site-packages/nvidia/cuda_cupti/lib:\
+/opt/app-root/lib/python3.12/site-packages/nvidia/cuda_nvrtc/lib:\
+/opt/app-root/lib/python3.12/site-packages/nvidia/nvjitlink/lib:\
+/opt/app-root/lib/python3.12/site-packages/nvidia/cufft/lib:\
+/opt/app-root/lib/python3.12/site-packages/nvidia/cufile/lib:\
+/opt/app-root/lib/python3.12/site-packages/nvidia/curand/lib:\
+/opt/app-root/lib/python3.12/site-packages/nvidia/cusolver/lib:\
+/opt/app-root/lib/python3.12/site-packages/nvidia/cusparse/lib:\
+/opt/app-root/lib/python3.12/site-packages/nvidia/cusparselt/lib:\
+/opt/app-root/lib/python3.12/site-packages/nvidia/nccl/lib:\
+/opt/app-root/lib/python3.12/site-packages/nvidia/nvtx/lib:\
+/opt/app-root/lib/python3.12/site-packages/nvidia/nvshmem/lib:\
+${LD_LIBRARY_PATH}"
+
+# Install Python packages
+
+# Install micropipenv to deploy packages from Pipfile.lock
+RUN pip install --no-cache-dir -U "micropipenv[toml]"
+
+# Install Python dependencies from Pipfile.lock file
+COPY Pipfile.lock ./
+
+RUN micropipenv install -- --no-cache-dir && \
+    rm -f ./Pipfile.lock && \
+    # Fix permissions to support pip in OpenShift environments \
+    chmod -R g+w /opt/app-root/lib/python3.12/site-packages && \
+    fix-permissions /opt/app-root -P
+
+# Install Flash Attention
+RUN pip install wheel
+RUN pip install --no-cache-dir flash-attn==2.7.4.post1 --no-build-isolation
 
 # Restore user workspace
 USER 1001
