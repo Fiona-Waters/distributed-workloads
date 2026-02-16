@@ -62,6 +62,7 @@ func RunOsftTrainingHubMultiGpuDistributedTraining(t *testing.T) {
 	endpoint, endpointOK := support.GetStorageBucketDefaultEndpoint()
 	accessKey, _ := support.GetStorageBucketAccessKeyId()
 	secretKey, _ := support.GetStorageBucketSecretKey()
+	sessionToken, _ := support.GetStorageBucketSessionToken()
 	bucket, bucketOK := support.GetStorageBucketName()
 	prefix, _ := support.GetStorageBucketOsftDir()
 	if !endpointOK {
@@ -89,6 +90,7 @@ func RunOsftTrainingHubMultiGpuDistributedTraining(t *testing.T) {
 			"export SHARED_PVC_NAME='%s'; "+
 			"export AWS_DEFAULT_ENDPOINT='%s'; export AWS_ACCESS_KEY_ID='%s'; "+
 			"export AWS_SECRET_ACCESS_KEY='%s'; "+
+			"export AWS_SESSION_TOKEN='%s'; "+
 			"export AWS_STORAGE_BUCKET='%s'; "+
 			"export AWS_STORAGE_BUCKET_OSFT_DIR='%s'; "+
 			"export TRAINING_RUNTIME='%s'; "+
@@ -96,7 +98,7 @@ func RunOsftTrainingHubMultiGpuDistributedTraining(t *testing.T) {
 			"if python -m papermill -k python3 /opt/app-root/notebooks/%s /opt/app-root/src/out.ipynb --log-output; "+
 			"then echo 'NOTEBOOK_STATUS: SUCCESS'; else echo 'NOTEBOOK_STATUS: FAILURE'; fi; sleep infinity",
 		support.GetOpenShiftApiUrl(test), userToken, namespace.Name, rwxPvc.Name,
-		endpoint, accessKey, secretKey, bucket, prefix,
+		endpoint, accessKey, secretKey, sessionToken, bucket, prefix,
 		trainerutils.DefaultTrainingHubRuntime,
 		osftNotebookName,
 	)

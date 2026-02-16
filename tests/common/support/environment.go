@@ -55,6 +55,7 @@ const (
 	storageDefaultRegion         = "AWS_DEFAULT_REGION"
 	storageAccessKeyId           = "AWS_ACCESS_KEY_ID"
 	storageSecretKey             = "AWS_SECRET_ACCESS_KEY"
+	storageSessionToken          = "AWS_SESSION_TOKEN"
 	storageBucketName            = "AWS_STORAGE_BUCKET"
 	storageBucketMnistDir        = "AWS_STORAGE_BUCKET_MNIST_DIR"
 	storageBucketFashionMnistDir = "AWS_STORAGE_BUCKET_FASHION_MNIST_DIR"
@@ -170,6 +171,11 @@ func GetStorageBucketAccessKeyId() (string, bool) {
 func GetStorageBucketSecretKey() (string, bool) {
 	storage_secret_key, exists := os.LookupEnv(storageSecretKey)
 	return storage_secret_key, exists
+}
+
+func GetStorageBucketSessionToken() (string, bool) {
+	storage_session_token, exists := os.LookupEnv(storageSessionToken)
+	return storage_session_token, exists
 }
 
 func GetStorageBucketName() (string, bool) {
