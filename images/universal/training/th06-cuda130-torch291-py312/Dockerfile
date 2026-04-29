@@ -26,22 +26,30 @@ USER 0
 WORKDIR /tmp/deps
 
 # Copy requirements files
-COPY --chown=1001:0 pyproject.toml requirements.txt requirements-ga.txt ./
+COPY --chown=1001:0 pyproject.toml requirements.txt ./
 
 # Switch to user 1001 for pip installations
 USER 1001
 WORKDIR /opt/app-root/src
 
-# Install dependencies from AIPCC indexes
-# torch and triton from EA2 index (GA will introduce torch 2.10.0, we need 2.9.1)
-# All other packages from GA index
-RUN uv pip install --no-cache-dir \
+# Install dependencies in two stages to keep individual layers under Quay's
+# per-layer size limit (~10GB). Stage 1: heavy ML packages. Stage 2: everything else.
+# --no-build prevents uv from building sdists from PyPI when pre-built AIPCC
+# wheels exist (e.g. flash-attn, mamba-ssm whose sdists need torch at build time)
+RUN uv pip install --no-cache-dir --no-build \
     --index-strategy=unsafe-best-match \
-    --index-url=https://console.redhat.com/api/pypi/public-rhai/rhoai/3.4-EA2/cuda13.0-ubi9/simple/ \
-    -r /tmp/deps/requirements.txt \
- && uv pip install --no-cache-dir \
-    --index-url=https://console.redhat.com/api/pypi/public-rhai/rhoai/3.4/cuda13.0-ubi9/simple/ \
-    -r /tmp/deps/requirements-ga.txt
+    --index-url=https://console.redhat.com/api/pypi/public-rhai/rhoai/3.5-EA1/cuda13.0-ubi9-test/simple/ \
+    --extra-index-url=https://pypi.org/simple/ \
+    torch==2.10.0 vllm==0.17.0 "ray[default]==2.53.0" flash-attn==2.8.3 triton==3.6.0 xformers
+
+RUN uv pip install --no-cache-dir --no-build \
+    --index-strategy=unsafe-best-match \
+    --index-url=https://console.redhat.com/api/pypi/public-rhai/rhoai/3.5-EA1/cuda13.0-ubi9-test/simple/ \
+    --extra-index-url=https://pypi.org/simple/ \
+    -r /tmp/deps/requirements.txt
+
+# Install verl separately with --no-deps (verl 0.7.1 pins numpy<2.0 but image needs numpy>=2.0)
+RUN uv pip install --no-cache-dir --no-deps --index-url=https://pypi.org/simple/ verl==0.7.1
 
 # Fix permissions for OpenShift
 ARG PYTHON_VERSION
@@ -57,9 +65,9 @@ RUN rm -rf /tmp/deps
 ################################################################################
 FROM ${BASE_IMAGE} AS final
 
-LABEL name="universal:th06-cuda130-py312-torch291" \
-      summary="TH06 CUDA 13.0 Python 3.12 image with PyTorch 2.9.1" \
-      description="Universal image combining minimal Jupyter workbench and runtime ML stack (CUDA 13.0, PyTorch 2.9.1, FlashAttention 2.8.3) on UBI9" \
+LABEL name="universal:th06-cuda130-py312-torch210" \
+      summary="TH06 CUDA 13.0 Python 3.12 image with PyTorch 2.10.0 + vLLM" \
+      description="Universal image combining minimal Jupyter workbench and runtime ML stack (CUDA 13.0, PyTorch 2.10.0, vLLM 0.18.0, FlashAttention 2.8.3) on UBI9" \
       io.k8s.display-name="TH06 CUDA 13.0 Python 3.12 (Workbench + Runtime)" \
       io.k8s.description="Universal image: Jupyter workbench by default; runtime when command provided."
 
@@ -87,7 +95,10 @@ ENV NVIDIA_VISIBLE_DEVICES=all \
     TRITON_CUOBJDUMP_PATH=/usr/local/cuda/bin/cuobjdump \
     TRITON_NVDISASM_PATH=/usr/local/cuda/bin/nvdisasm \
     TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9;9.0" \
-    XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda
+    XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda \
+    VLLM_USE_V1=0 \
+    VLLM_LOGGING_LEVEL=WARN \
+    TOKENIZERS_PARALLELISM=true
 
 # System packages (MIDSTREAM ONLY - skipped when DOWNSTREAM=true)
 # Repo files for CUDA and RDMA packages
