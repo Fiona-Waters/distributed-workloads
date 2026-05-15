@@ -32,11 +32,36 @@ COPY --chown=1001:0 pyproject.toml requirements.txt ./
 USER 1001
 WORKDIR /opt/app-root/src
 
-# Install dependencies from AIPCC GA index
+# Install dependencies from AIPCC 3.5 EA1 index
 RUN uv pip install --no-cache-dir \
     --index-strategy=unsafe-best-match \
-    --index-url=https://console.redhat.com/api/pypi/public-rhai/rhoai/3.4/cuda13.0-ubi9/simple/ \
+    --index-url=https://console.redhat.com/api/pypi/public-rhai/rhoai/3.5-EA1/cuda13.0-ubi9-test/simple/ \
     -r /tmp/deps/requirements.txt
+
+# opencv-python-headless is pulled by vllm + mistral-common but only needed for
+# the optional OpenCV video backend (PyAV is the default since vllm#39986).
+# Its cv2/typing/__init__.py triggers `import cv2` during pkgutil scanning in
+# multiprocessing.spawn child processes, which fails with
+# "libavcodec.so.60: cannot open shared object file" on UBI9.
+# Upstream vLLM is making it optional: https://github.com/vllm-project/vllm/issues/40741
+RUN uv pip uninstall opencv-python-headless 2>/dev/null || true
+
+# training-hub from main (post-v0.8.0, includes PR #62 vLLM V1 LoRA fix)
+# TODO: Replace with pinned AIPCC version once a new release is cut
+RUN uv pip install --no-cache-dir --no-deps \
+    "training-hub[lora,grpo] @ git+https://github.com/Red-Hat-AI-Innovation-Team/training_hub.git@main"
+
+# TEMPORARY: openpipe-art not yet in AIPCC (AIPCC-16172)
+# Remove this step and add to pyproject.toml once AIPCC packages it
+# --no-deps: weave (transitive) pulls polyfile-weave which registers cv2.typing
+# stubs that crash under multiprocessing.spawn (libavcodec.so.60 not in UBI9).
+# Explicitly install only the runtime deps ART needs for the training-hub path.
+RUN uv pip install --no-cache-dir --no-deps \
+    --index-url=https://pypi.org/simple/ \
+    openpipe-art==0.5.17
+RUN uv pip install --no-cache-dir \
+    --index-url=https://pypi.org/simple/ \
+    "polars>=1.26.0" "tblib>=3.0.0" "litellm>=1.71.1"
 
 # Fix permissions for OpenShift
 ARG PYTHON_VERSION

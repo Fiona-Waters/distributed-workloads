@@ -3,7 +3,7 @@
 # To regenerate requirements.txt:
 #   uv pip compile --python-platform=linux --python-version=3.12 \
 #     --index-strategy=unsafe-best-match \
-#     --index-url=https://console.redhat.com/api/pypi/public-rhai/rhoai/3.4/cuda13.0-ubi9/simple/ \
+#     --index-url=https://console.redhat.com/api/pypi/public-rhai/rhoai/3.5-EA1/cuda13.0-ubi9-test/simple/ \
 #     -o requirements.txt pyproject.toml
 
 [project]
@@ -26,6 +26,9 @@ dependencies = [
     
     # xformers (efficient transformers)
     "xformers==0.0.35",
+    
+    # Inference (required for GRPO/RLVR training - ART backend)
+    "vllm==0.18.0",
     
     # ML Training and Inference Libraries
     "accelerate==1.12.0",
@@ -74,7 +77,7 @@ dependencies = [
     "s3fs==2025.9.0",
     
     # Training Frameworks
-    "training_hub[lora]==0.6.0",
+    # training-hub installed separately in Dockerfile from git main (post-v0.8.0)
     "instructlab-training==0.14.2",
     "rhai-innovation-mini-trainer==0.6.1",
     "unsloth==2026.3.3",
@@ -100,4 +103,4 @@ environments = [
     "sys_platform == 'linux' and implementation_name == 'cpython'",
 ]
 index-strategy = "unsafe-best-match"
-index-url = "https://console.redhat.com/api/pypi/public-rhai/rhoai/3.4/cuda13.0-ubi9/simple/"
+index-url = "https://console.redhat.com/api/pypi/public-rhai/rhoai/3.5-EA1/cuda13.0-ubi9-test/simple/"
