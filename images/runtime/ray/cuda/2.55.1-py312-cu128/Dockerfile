@@ -37,9 +37,12 @@ RUN if [ "${TARGETARCH}" = "arm64" ]; then \
     fi
 
 # For libraries in the cuda-compat-* package: https://docs.nvidia.com/cuda/eula/index.html#attachment-a
-RUN yum upgrade -y && yum install -y \
-    cuda-cudart-12-8-${NV_CUDA_CUDART_VERSION} \
-    cuda-compat-12-8 \
+RUN for i in 1 2 3; do \
+        yum upgrade -y && yum install -y \
+            cuda-cudart-12-8-${NV_CUDA_CUDART_VERSION} \
+            cuda-compat-12-8 \
+        && break || { echo "Attempt $i failed, retrying..."; yum clean all; sleep 5; }; \
+    done \
     && yum clean all \
     && rm -rf /var/cache/yum/*
 
@@ -67,12 +70,15 @@ ENV NV_LIBNCCL_VERSION=2.25.1
 ENV NCCL_VERSION=2.25.1
 ENV NV_LIBNCCL_PACKAGE=${NV_LIBNCCL_PACKAGE_NAME}-${NV_LIBNCCL_PACKAGE_VERSION}+cuda12.8
 
-RUN yum install -y \
-    cuda-libraries-12-8-${NV_CUDA_LIB_VERSION} \
-    cuda-nvtx-12-8-${NV_NVTX_VERSION} \
-    ${NV_LIBNPP_PACKAGE} \
-    libcublas-12-8-${NV_LIBCUBLAS_VERSION} \
-    ${NV_LIBNCCL_PACKAGE} \
+RUN for i in 1 2 3; do \
+        yum install -y \
+            cuda-libraries-12-8-${NV_CUDA_LIB_VERSION} \
+            cuda-nvtx-12-8-${NV_NVTX_VERSION} \
+            ${NV_LIBNPP_PACKAGE} \
+            libcublas-12-8-${NV_LIBCUBLAS_VERSION} \
+            ${NV_LIBNCCL_PACKAGE} \
+        && break || { echo "Attempt $i failed, retrying..."; yum clean all; sleep 5; }; \
+    done \
     && yum clean all \
     && rm -rf /var/cache/yum/*
 
@@ -97,18 +103,21 @@ ENV NV_LIBNCCL_DEV_PACKAGE=${NV_LIBNCCL_DEV_PACKAGE_NAME}-${NV_LIBNCCL_DEV_PACKA
 ENV NV_CUDA_NSIGHT_COMPUTE_VERSION=12.8.0-1
 ENV NV_CUDA_NSIGHT_COMPUTE_DEV_PACKAGE=cuda-nsight-compute-12-8-${NV_CUDA_NSIGHT_COMPUTE_VERSION}
 
-RUN yum install -y \
-    make \
-    findutils \
-    cuda-command-line-tools-12-8-${NV_CUDA_LIB_VERSION} \
-    cuda-libraries-devel-12-8-${NV_CUDA_LIB_VERSION} \
-    cuda-minimal-build-12-8-${NV_CUDA_LIB_VERSION} \
-    cuda-cudart-devel-12-8-${NV_CUDA_CUDART_DEV_VERSION} \
-    cuda-nvml-devel-12-8-${NV_NVML_DEV_VERSION} \
-    libcublas-devel-12-8-${NV_LIBCUBLAS_DEV_VERSION} \
-    ${NV_LIBNPP_DEV_PACKAGE} \
-    ${NV_LIBNCCL_DEV_PACKAGE} \
-    ${NV_CUDA_NSIGHT_COMPUTE_DEV_PACKAGE} \
+RUN for i in 1 2 3; do \
+        yum install -y \
+            make \
+            findutils \
+            cuda-command-line-tools-12-8-${NV_CUDA_LIB_VERSION} \
+            cuda-libraries-devel-12-8-${NV_CUDA_LIB_VERSION} \
+            cuda-minimal-build-12-8-${NV_CUDA_LIB_VERSION} \
+            cuda-cudart-devel-12-8-${NV_CUDA_CUDART_DEV_VERSION} \
+            cuda-nvml-devel-12-8-${NV_NVML_DEV_VERSION} \
+            libcublas-devel-12-8-${NV_LIBCUBLAS_DEV_VERSION} \
+            ${NV_LIBNPP_DEV_PACKAGE} \
+            ${NV_LIBNCCL_DEV_PACKAGE} \
+            ${NV_CUDA_NSIGHT_COMPUTE_DEV_PACKAGE} \
+        && break || { echo "Attempt $i failed, retrying..."; yum clean all; sleep 5; }; \
+    done \
     && if [ "${TARGETARCH}" != "arm64" ]; then \
         yum install -y ${NV_NVPROF_DEV_PACKAGE}; \
     fi \
@@ -125,9 +134,12 @@ ENV NV_CUDNN_PACKAGE_DEV=libcudnn9-devel-cuda-12-${NV_CUDNN_VERSION}
 
 LABEL com.nvidia.cudnn.version="${NV_CUDNN_VERSION}"
 
-RUN yum install -y \
-    ${NV_CUDNN_PACKAGE} \
-    ${NV_CUDNN_PACKAGE_DEV} \
+RUN for i in 1 2 3; do \
+        yum install -y \
+            ${NV_CUDNN_PACKAGE} \
+            ${NV_CUDNN_PACKAGE_DEV} \
+        && break || { echo "Attempt $i failed, retrying..."; yum clean all; sleep 5; }; \
+    done \
     && yum clean all \
     && rm -rf /var/cache/yum/*
 
@@ -140,6 +152,20 @@ RUN pip install --no-cache-dir -U "micropipenv[toml]"
 COPY Pipfile.lock ./
 
 RUN micropipenv install && rm -f ./Pipfile.lock
+
+# verl: install with --no-deps because verl's numpy<2.0.0 pin conflicts with
+# vllm's numpy>=2 requirement. The pin is overly conservative — verl works fine
+# with numpy>=2 at runtime (confirmed by Training Hub project).
+RUN pip install --no-cache-dir --no-deps verl==0.7.1
+
+# verl runtime dependencies (installed separately since verl was --no-deps)
+RUN pip install --no-cache-dir \
+    codetiming hydra-core pybind11 pylatexenc tensorboard \
+    "tensordict!=0.9.0,<=0.10.0,>=0.8.0" torchdata wandb
+
+# training-hub: install from main branch (post-0.8.0 required for GRPO+vLLM support)
+# No [grpo] extra — verl is already installed above, and openpipe-art (ART backend) is not needed for Phase 2.
+RUN pip install --no-cache-dir "training-hub @ git+https://github.com/Red-Hat-AI-Innovation-Team/training_hub.git@main"
 
 # Restore user workspace
 USER 1001
