@@ -153,6 +153,10 @@ COPY Pipfile.lock ./
 
 RUN micropipenv install && rm -f ./Pipfile.lock
 
+# vllm: install separately because its platform-specific wheels cause
+# hash mismatches when the lockfile is generated on a different base image.
+RUN pip install --no-cache-dir "vllm>=0.18.0,<0.21.0"
+
 # verl: install with --no-deps because verl's numpy<2.0.0 pin conflicts with
 # vllm's numpy>=2 requirement. The pin is overly conservative — verl works fine
 # with numpy>=2 at runtime (confirmed by Training Hub project).
@@ -163,9 +167,14 @@ RUN pip install --no-cache-dir \
     codetiming hydra-core pybind11 pylatexenc tensorboard \
     "tensordict!=0.9.0,<=0.10.0,>=0.8.0" torchdata wandb
 
-# training-hub: install from main branch (post-0.8.0 required for GRPO+vLLM support)
-# No [grpo] extra — verl is already installed above, and openpipe-art (ART backend) is not needed for Phase 2.
-RUN pip install --no-cache-dir "training-hub @ git+https://github.com/Red-Hat-AI-Innovation-Team/training_hub.git@main"
+# CUDA extensions that must compile against the installed torch.
+# These cannot go in Pipfile because they require --no-build-isolation
+# (torch must be present at build time for cpp_extension linking).
+ENV TORCH_CUDA_ARCH_LIST="8.0"
+RUN pip install --no-cache-dir --no-build-isolation \
+    "flash-attn>=2.8" \
+    "mamba-ssm[causal-conv1d]>=2.2.5" \
+    "xformers>=0.0.33.post1"
 
 # Restore user workspace
 USER 1001
