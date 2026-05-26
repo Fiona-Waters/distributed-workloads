@@ -1,7 +1,4 @@
-ARG PYTHON_VERSION=312
-ARG IMAGE_TAG=9.7-1778488949
-
-FROM registry.access.redhat.com/ubi9/python-${PYTHON_VERSION}:${IMAGE_TAG}
+FROM registry.access.redhat.com/ubi9/python-312:9.7-1778488949
 
 ARG TARGETARCH
 
