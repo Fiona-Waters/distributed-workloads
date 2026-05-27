@@ -31,6 +31,8 @@ spec:
     - linux/x86_64
   - name: dockerfile
     value: images/runtime/ray/cuda/2.55.1-py312-cu128-th/Dockerfile
+  - name: path-context
+    value: images/runtime/ray/cuda/2.55.1-py312-cu128-th
   pipelineSpec:
     description: |
       This pipeline is ideal for building multi-arch container images from a Containerfile while maintaining trust after pipeline customization.
