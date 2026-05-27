@@ -16,6 +16,9 @@ metadata:
   name: ray-training-hub-on-push
   namespace: rhoai-tenant
 spec:
+  timeouts:
+    pipeline: 9h
+    tasks: 6h
   params:
   - name: git-url
     value: '{{source_url}}'
@@ -25,7 +28,7 @@ spec:
     value: quay.io/redhat-user-workloads/rhoai-tenant/ray-training-hub:{{revision}}
   - name: build-platforms
     value:
-    - linux/x86_64
+    - linux-extra-fast/amd64
   - name: dockerfile
     value: images/runtime/ray/cuda/2.55.1-py312-cu128-th/Dockerfile
   - name: path-context
