@@ -158,7 +158,7 @@ RUN pip install --no-cache-dir \
 # CUDA extensions that must compile against the installed torch.
 # These cannot go in Pipfile because they require --no-build-isolation
 # (torch must be present at build time for cpp_extension linking).
-RUN pip install --no-cache-dir --no-build-isolation \
+RUN pip install --no-cache-dir --no-build-isolation -v \
     "flash-attn>=2.8" \
     "mamba-ssm[causal-conv1d]>=2.2.5" \
     "xformers>=0.0.33.post1"
