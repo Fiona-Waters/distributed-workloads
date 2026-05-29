@@ -155,13 +155,13 @@ RUN pip install --no-cache-dir \
     codetiming hydra-core pybind11 pylatexenc tensorboard \
     "tensordict!=0.9.0,<=0.10.0,>=0.8.0" torchdata wandb
 
-# CUDA extensions that must compile against the installed torch.
-# These cannot go in Pipfile because they require --no-build-isolation
-# (torch must be present at build time for cpp_extension linking).
-RUN pip install --no-cache-dir --no-build-isolation -v \
-    "flash-attn>=2.8" \
-    "mamba-ssm[causal-conv1d]>=2.2.5" \
-    "xformers>=0.0.33.post1"
+# CUDA extensions: use pre-built wheels from AIPCC index to avoid hours-long nvcc compilation
+RUN pip install --no-cache-dir \
+    --extra-index-url https://packages.redhat.com/api/pypi/public-rhai/rhoai/3.2/cuda-ubi9/simple/ \
+    "flash-attn==2.8.3" \
+    "mamba-ssm==2.2.6.post3" \
+    "causal-conv1d==1.5.3.post1" \
+    "xformers==0.0.33.post1"
 
 # Restore user workspace
 USER 1001
