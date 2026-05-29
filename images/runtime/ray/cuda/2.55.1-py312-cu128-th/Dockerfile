@@ -155,8 +155,9 @@ RUN pip install --no-cache-dir \
     codetiming hydra-core pybind11 pylatexenc tensorboard \
     "tensordict!=0.9.0,<=0.10.0,>=0.8.0" torchdata wandb
 
-# CUDA extensions: use pre-built wheels from AIPCC index to avoid hours-long nvcc compilation
-RUN pip install --no-cache-dir \
+# CUDA extensions: use pre-built wheels from AIPCC index to avoid hours-long nvcc compilation.
+# --no-deps prevents these wheels from pulling torch 2.9.0 and downgrading the existing torch 2.10.0.
+RUN pip install --no-cache-dir --no-deps \
     --extra-index-url https://packages.redhat.com/api/pypi/public-rhai/rhoai/3.2/cuda-ubi9/simple/ \
     "flash-attn==2.8.3" \
     "mamba-ssm==2.2.6.post3" \
