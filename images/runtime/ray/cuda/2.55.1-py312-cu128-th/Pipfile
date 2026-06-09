@@ -4,6 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+torch = {version = "==2.9.0"}
 numpy = {version = ">=2.0.0"}
 "ray[all]" = {version = "~=2.55.1"}
 "training-hub" = {version = "==0.8.1"}
