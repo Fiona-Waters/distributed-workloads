@@ -143,7 +143,9 @@ RUN micropipenv install && rm -f ./Pipfile.lock
 
 # vllm: installed separately because its sdist requires torch/CUDA to extract
 # build metadata, which makes pipenv lock fail in a clean environment.
-RUN pip install --no-cache-dir "vllm>=0.18.0,<0.21.0"
+# Constrain torch to 2.9.0 so vllm doesn't upgrade it — flash-attn from AIPCC
+# is compiled against torch 2.9.0 and will fail with an ABI mismatch otherwise.
+RUN pip install --no-cache-dir "vllm>=0.18.0,<0.21.0" "torch==2.9.0"
 
 # verl: install with --no-deps because verl's numpy<2.0.0 pin conflicts with
 # vllm's numpy>=2 requirement. The pin is overly conservative — verl works fine
@@ -151,12 +153,13 @@ RUN pip install --no-cache-dir "vllm>=0.18.0,<0.21.0"
 RUN pip install --no-cache-dir --no-deps verl==0.7.1
 
 # verl runtime dependencies (installed separately since verl was --no-deps)
+# Constrain torch to prevent torchdata/tensordict from upgrading it.
 RUN pip install --no-cache-dir \
     codetiming hydra-core pybind11 pylatexenc tensorboard \
-    "tensordict!=0.9.0,<=0.10.0,>=0.8.0" torchdata wandb
+    "tensordict!=0.9.0,<=0.10.0,>=0.8.0" torchdata wandb "torch==2.9.0"
 
 # CUDA extensions: use pre-built wheels from AIPCC index to avoid hours-long nvcc compilation.
-# --no-deps prevents these wheels from pulling torch 2.9.0 and downgrading the existing torch 2.10.0.
+# --no-deps prevents these wheels from pulling in their own torch dependency.
 RUN pip install --no-cache-dir --no-deps \
     --extra-index-url https://packages.redhat.com/api/pypi/public-rhai/rhoai/3.2/cuda-ubi9/simple/ \
     "flash-attn==2.8.3" \
