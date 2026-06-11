@@ -141,31 +141,34 @@ COPY Pipfile.lock ./
 
 RUN micropipenv install && rm -f ./Pipfile.lock
 
-# vllm: installed separately because its sdist requires torch/CUDA to extract
-# build metadata, which makes pipenv lock fail in a clean environment.
-# Constrain torch to 2.9.0 so vllm doesn't upgrade it — flash-attn from AIPCC
-# is compiled against torch 2.9.0 and will fail with an ABI mismatch otherwise.
-RUN pip install --no-cache-dir "vllm>=0.18.0,<0.21.0" "torch==2.9.0"
+# AIPCC (AI Platform Container Catalog) provides pre-built CUDA packages that
+# are all compiled against the same torch version, ensuring ABI compatibility.
+# torch, vllm, flash-attn, and other CUDA extensions must all come from this
+# index to avoid undefined-symbol errors from mismatched PyTorch ABIs.
+ENV AIPCC_INDEX=https://packages.redhat.com/api/pypi/public-rhai/rhoai/3.2/cuda-ubi9/simple/
 
-# verl: install with --no-deps because verl's numpy<2.0.0 pin conflicts with
-# vllm's numpy>=2 requirement. The pin is overly conservative — verl works fine
-# with numpy>=2 at runtime (confirmed by Training Hub project).
-RUN pip install --no-cache-dir --no-deps verl==0.7.1
-
-# verl runtime dependencies (installed separately since verl was --no-deps)
-# Constrain torch to prevent torchdata/tensordict from upgrading it.
-RUN pip install --no-cache-dir \
-    codetiming hydra-core pybind11 pylatexenc tensorboard \
-    "tensordict!=0.9.0,<=0.10.0,>=0.8.0" torchdata wandb "torch==2.9.0"
-
-# CUDA extensions: use pre-built wheels from AIPCC index to avoid hours-long nvcc compilation.
-# --no-deps prevents these wheels from pulling in their own torch dependency.
-RUN pip install --no-cache-dir --no-deps \
-    --extra-index-url https://packages.redhat.com/api/pypi/public-rhai/rhoai/3.2/cuda-ubi9/simple/ \
+# Install torch + vllm + CUDA extensions from AIPCC.
+# --force-reinstall overwrites the PyPI torch from micropipenv with the AIPCC build.
+# --no-deps prevents any package from pulling in an incompatible torch version.
+RUN pip install --no-cache-dir --no-deps --force-reinstall \
+    --extra-index-url ${AIPCC_INDEX} \
+    "torch==2.9.0" \
+    "vllm==0.11.0" \
     "flash-attn==2.8.3" \
     "mamba-ssm==2.2.6.post3" \
     "causal-conv1d==1.5.3.post1" \
     "xformers==0.0.33.post1"
+
+# verl: install with --no-deps because verl's numpy<2.0.0 pin conflicts with
+# other packages' numpy>=2 requirement. The pin is overly conservative — verl
+# works fine with numpy>=2 at runtime (confirmed by Training Hub project).
+RUN pip install --no-cache-dir --no-deps verl==0.7.1
+
+# verl runtime dependencies (installed separately since verl was --no-deps).
+# Constrain torch to prevent torchdata/tensordict from upgrading it.
+RUN pip install --no-cache-dir \
+    codetiming hydra-core pybind11 pylatexenc tensorboard \
+    "tensordict!=0.9.0,<=0.10.0,>=0.8.0" torchdata wandb "torch==2.9.0"
 
 # Restore user workspace
 USER 1001
