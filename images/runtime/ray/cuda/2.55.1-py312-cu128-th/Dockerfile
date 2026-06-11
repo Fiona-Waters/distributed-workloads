@@ -159,16 +159,24 @@ RUN pip install --no-cache-dir --no-deps --force-reinstall \
     "causal-conv1d==1.5.3.post1" \
     "xformers==0.0.33.post1"
 
-# verl: install with --no-deps because verl's numpy<2.0.0 pin conflicts with
-# other packages' numpy>=2 requirement. The pin is overly conservative — verl
-# works fine with numpy>=2 at runtime (confirmed by Training Hub project).
+# vllm + verl runtime dependencies from AIPCC.
+# vllm and verl are both installed with --no-deps (vllm pins torch==2.8.0,
+# verl pins numpy<2.0.0 — both conflict with the image). Their Python-only
+# deps are installed here normally, with torch constrained to prevent upgrades.
 RUN pip install --no-cache-dir --no-deps verl==0.7.1
 
-# verl runtime dependencies (installed separately since verl was --no-deps).
-# Constrain torch to prevent torchdata/tensordict from upgrading it.
 RUN pip install --no-cache-dir \
-    cachetools codetiming hydra-core pybind11 pylatexenc tensorboard \
-    "tensordict!=0.9.0,<=0.10.0,>=0.8.0" torchdata wandb "torch==2.9.0"
+    --extra-index-url ${AIPCC_INDEX} \
+    blake3 cachetools cbor2 "compressed-tensors==0.11.0" "depyf==0.19.0" \
+    "diskcache==5.6.3" "gguf>=0.13.0" "lark==1.2.2" "llguidance>=0.7.11,<0.8.0" \
+    "lm-format-enforcer==0.11.3" "mistral-common>=1.8.2" msgspec \
+    openai "openai-harmony>=0.0.3" "opencv-python-headless>=4.11.0" \
+    "outlines-core==0.2.11" partial-json-parser \
+    "prometheus-fastapi-instrumentator>=7.0.0" pybase64 python-json-logger \
+    pyzmq setproctitle tiktoken watchfiles "xgrammar==0.1.25" \
+    codetiming hydra-core pybind11 pylatexenc tensorboard \
+    "tensordict!=0.9.0,<=0.10.0,>=0.8.0" torchdata wandb \
+    "torch==2.9.0"
 
 # Restore user workspace
 USER 1001
