@@ -167,7 +167,7 @@ RUN pip install --no-cache-dir --no-deps verl==0.7.1
 # verl runtime dependencies (installed separately since verl was --no-deps).
 # Constrain torch to prevent torchdata/tensordict from upgrading it.
 RUN pip install --no-cache-dir \
-    codetiming hydra-core pybind11 pylatexenc tensorboard \
+    cachetools codetiming hydra-core pybind11 pylatexenc tensorboard \
     "tensordict!=0.9.0,<=0.10.0,>=0.8.0" torchdata wandb "torch==2.9.0"
 
 # Restore user workspace
