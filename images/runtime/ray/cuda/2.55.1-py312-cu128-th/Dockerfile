@@ -131,9 +131,6 @@ RUN yum install -y \
     && yum clean all \
     && rm -rf /var/cache/yum/*
 
-# System libraries required by Python packages (pyzmq needs libzmq)
-RUN yum install -y zeromq && yum clean all && rm -rf /var/cache/yum/*
-
 # Install Python packages
 
 # Install micropipenv to deploy packages from Pipfile.lock
@@ -176,10 +173,14 @@ RUN pip install --no-cache-dir \
     openai "openai-harmony>=0.0.3" "opencv-python-headless>=4.11.0" \
     "outlines-core==0.2.11" partial-json-parser \
     "prometheus-fastapi-instrumentator>=7.0.0" pybase64 python-json-logger \
-    pyzmq setproctitle tiktoken watchfiles "xgrammar==0.1.25" \
+    setproctitle tiktoken watchfiles "xgrammar==0.1.25" \
     codetiming hydra-core pybind11 pylatexenc tensorboard \
     "tensordict!=0.9.0,<=0.10.0,>=0.8.0" torchdata wandb \
     "torch==2.9.0"
+
+# pyzmq from PyPI (not AIPCC) — the manylinux wheel bundles libzmq.so.5,
+# so no system-level zeromq RPM is needed.
+RUN pip install --no-cache-dir pyzmq
 
 # Restore user workspace
 USER 1001
