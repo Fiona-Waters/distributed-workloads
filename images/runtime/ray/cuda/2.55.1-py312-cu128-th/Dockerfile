@@ -131,6 +131,9 @@ RUN yum install -y \
     && yum clean all \
     && rm -rf /var/cache/yum/*
 
+# System libraries required by Python packages (pyzmq needs libzmq)
+RUN yum install -y zeromq && yum clean all && rm -rf /var/cache/yum/*
+
 # Install Python packages
 
 # Install micropipenv to deploy packages from Pipfile.lock
