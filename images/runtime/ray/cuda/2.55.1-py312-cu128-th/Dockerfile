@@ -153,7 +153,7 @@ ENV AIPCC_INDEX=https://packages.redhat.com/api/pypi/public-rhai/rhoai/3.2/cuda-
 RUN pip install --no-cache-dir --no-deps --force-reinstall \
     --extra-index-url ${AIPCC_INDEX} \
     "torch==2.9.0" \
-    "vllm==0.11.0" \
+    "vllm==0.11.1rc6" \
     "flash-attn==2.8.3" \
     "mamba-ssm==2.2.6.post3" \
     "causal-conv1d==1.5.3.post1" \
@@ -167,8 +167,8 @@ RUN pip install --no-cache-dir --no-deps verl==0.7.1
 
 RUN pip install --no-cache-dir \
     --extra-index-url ${AIPCC_INDEX} \
-    blake3 cachetools cbor2 "compressed-tensors==0.11.0" "depyf==0.19.0" \
-    "diskcache==5.6.3" "gguf>=0.13.0" "lark==1.2.2" "llguidance>=0.7.11,<0.8.0" \
+    blake3 cachetools cbor2 "compressed-tensors==0.12.2" "depyf==0.19.0" \
+    "diskcache==5.6.3" "gguf>=0.13.0" "lark==1.2.2" "llguidance>=1.3.0,<1.4.0" \
     "lm-format-enforcer==0.11.3" "mistral-common>=1.8.2" msgspec \
     openai "openai-harmony>=0.0.3" "opencv-python-headless>=4.11.0" \
     "outlines-core==0.2.11" partial-json-parser \
