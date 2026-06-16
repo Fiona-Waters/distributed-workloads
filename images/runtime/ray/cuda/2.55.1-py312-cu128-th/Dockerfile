@@ -167,12 +167,13 @@ RUN pip install --no-cache-dir --no-deps verl==0.7.1
 
 RUN pip install --no-cache-dir \
     --extra-index-url ${AIPCC_INDEX} \
-    blake3 cachetools cbor2 "compressed-tensors==0.12.2" "depyf==0.19.0" \
-    "diskcache==5.6.3" "gguf>=0.13.0" "lark==1.2.2" "llguidance>=1.3.0,<1.4.0" \
-    "lm-format-enforcer==0.11.3" "mistral-common>=1.8.2" msgspec \
+    "anthropic==0.71.0" blake3 cachetools cbor2 "compressed-tensors==0.12.2" \
+    "depyf==0.20.0" "diskcache==5.6.3" email-validator \
+    "gguf>=0.13.0" "lark==1.2.2" "llguidance>=1.3.0,<1.4.0" \
+    "lm-format-enforcer==0.11.3" "mistral-common>=1.8.5" msgspec \
     openai "openai-harmony>=0.0.3" "opencv-python-headless>=4.11.0" \
     "outlines-core==0.2.11" partial-json-parser \
-    "prometheus-fastapi-instrumentator>=7.0.0" pybase64 python-json-logger \
+    "prometheus-fastapi-instrumentator>=7.0.0" pybase64 python-json-logger python-multipart \
     setproctitle tiktoken watchfiles "xgrammar==0.1.25" \
     codetiming hydra-core pybind11 pylatexenc tensorboard \
     "tensordict!=0.9.0,<=0.10.0,>=0.8.0" torchdata wandb \
