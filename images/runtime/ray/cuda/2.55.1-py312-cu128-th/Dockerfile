@@ -149,6 +149,10 @@ ENV AIPCC_INDEX=https://packages.redhat.com/api/pypi/public-rhai/rhoai/3.3/cuda1
 RUN pip install --no-cache-dir --no-deps --force-reinstall \
     --extra-index-url ${AIPCC_INDEX} \
     "torch==2.9.0" \
+    "torchvision==0.24.0" \
+    "torchaudio==2.9.0" \
+    "triton==3.5.0" \
+    "bitsandbytes==0.49.1" \
     "vllm==0.13.0" \
     "flash-attn==2.8.3" \
     "mamba-ssm==2.3.0" \
