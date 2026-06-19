@@ -159,7 +159,7 @@ RUN pip install --no-cache-dir --no-deps --force-reinstall \
     "xformers==0.0.33.post2"
 
 # verl: --no-deps because its numpy<2.0.0 pin conflicts with vllm's numpy>=2.
-RUN pip install --no-cache-dir --no-deps verl==0.7.1
+RUN pip install --no-cache-dir --no-deps verl==0.8.0
 
 # vllm 0.13.0 + verl 0.7.1 runtime dependencies.
 # Many deps (aiohttp, fastapi, pydantic, numpy, ray, transformers, etc.) are
