@@ -152,7 +152,6 @@ RUN pip install --no-cache-dir --no-deps --force-reinstall \
     "torchvision==0.24.0" \
     "torchaudio==2.9.0" \
     "triton==3.5.0" \
-    "bitsandbytes==0.49.1" \
     "vllm==0.13.0" \
     "flash-attn==2.8.3" \
     "mamba-ssm==2.3.0" \
@@ -187,7 +186,6 @@ RUN pip install --no-cache-dir \
     msgspec \
     openai \
     "openai-harmony>=0.0.3" \
-    "opencv-python-headless>=4.11.0" \
     outlines-core==0.2.11 \
     partial-json-parser \
     "prometheus-fastapi-instrumentator>=7.0.0" \
