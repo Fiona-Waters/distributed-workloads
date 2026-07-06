@@ -3,7 +3,7 @@
 # To regenerate requirements.txt:
 #   uv pip compile --python-platform=linux --python-version=3.12 \
 #     --index-strategy=unsafe-best-match \
-#     --index-url=https://console.redhat.com/api/pypi/public-rhai/rhoai/3.5-EA1/cuda13.0-ubi9-test/simple/ \
+#     --index-url=https://console.redhat.com/api/pypi/public-rhai/rhoai/3.5/cuda13.0-ubi9/simple/ \
 #     -o requirements.txt pyproject.toml
 
 [project]
@@ -19,7 +19,7 @@ dependencies = [
     # ===================================================================
     
     # PyTorch with CUDA 13.0
-    "torch==2.10.0",
+    "torch==2.11.0",
     
     # Triton (GPU kernel compiler)
     "triton==3.6.0",
@@ -28,13 +28,13 @@ dependencies = [
     "xformers==0.0.35",
     
     # Inference (required for GRPO/RLVR training - ART backend)
-    "vllm==0.18.0",
+    "vllm==0.21.0+rhaiv.8",
     
     # ML Training and Inference Libraries
-    "accelerate==1.12.0",
-    "transformers==4.57.6",
-    "peft==0.18.1",
-    "datasets==4.3.0",
+    "accelerate==1.14.0",
+    "transformers==5.12.1",
+    "peft==0.19.1",
+    "datasets==5.0.0",
     
     # Core Dependencies
     "tqdm>=4.67.1",
@@ -44,7 +44,7 @@ dependencies = [
     "typer>=0.19.2",
     "protobuf>=3.20.0",
     "simpleeval>=0.9.13",
-    "safetensors==0.7.0",
+    "safetensors==0.8.0",
     "py-cpuinfo>=9.0.0",
     
     # Deep Learning Utilities
@@ -62,8 +62,8 @@ dependencies = [
     "tokenizers>=0.22.0",
     
     # Training Libraries
-    "trl==0.24.0",
-    "deepspeed>=0.18.4",
+    "trl==1.6.0",
+    "deepspeed==0.19.2",
     
     # Networking
     "async-timeout==5.0.1",
@@ -71,16 +71,15 @@ dependencies = [
     # HuggingFace
     "hf-xet>=1.1.8",
     "huggingface-hub>=0.34.4",
-    "mlflow==3.10.1+rhaiv.3",
+    "mlflow==3.14.0",
     
     # Storage
     "s3fs==2025.9.0",
     
     # Training Frameworks
-    # training-hub installed separately in Dockerfile from git main (post-v0.8.0)
-    "instructlab-training==0.14.2",
-    "rhai-innovation-mini-trainer==0.6.1",
-    "unsloth==2026.3.3",
+    "training-hub==0.9.0",
+    "instructlab-training==0.16.1",
+    "rhai-innovation-mini-trainer==0.8.1",
     
     # Kubeflow SDK
     "kubeflow==0.3.0+rhaiv.2",
@@ -88,10 +87,10 @@ dependencies = [
     "pyspark_connect==4.0.1",
     
     # Model Management
-    "model_registry==0.3.7",
+    "model_registry==0.3.10",
     
     # Flash Attention (pre-built wheel from AIPCC)
-    "flash-attn==2.8.3",
+    "flash-attn==2.8.3.post1",
     
     # Mamba dependencies (pre-built wheels from AIPCC)
     "causal-conv1d>=1.5.3",
@@ -103,4 +102,7 @@ environments = [
     "sys_platform == 'linux' and implementation_name == 'cpython'",
 ]
 index-strategy = "unsafe-best-match"
-index-url = "https://console.redhat.com/api/pypi/public-rhai/rhoai/3.5-EA1/cuda13.0-ubi9-test/simple/"
+index-url = "https://console.redhat.com/api/pypi/public-rhai/rhoai/3.5/cuda13.0-ubi9/simple/"
+override-dependencies = [
+    "tilelang==0.1.9",
+]

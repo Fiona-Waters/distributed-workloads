@@ -32,10 +32,12 @@ COPY --chown=1001:0 pyproject.toml requirements.txt ./
 USER 1001
 WORKDIR /opt/app-root/src
 
-# Install dependencies from AIPCC 3.5 EA1 index
-RUN uv pip install --no-cache-dir \
+# Install dependencies from AIPCC 3.5 index
+RUN echo "tilelang==0.1.9" > /tmp/deps/overrides.txt && \
+    uv pip install --no-cache-dir \
     --index-strategy=unsafe-best-match \
-    --index-url=https://console.redhat.com/api/pypi/public-rhai/rhoai/3.5-EA1/cuda13.0-ubi9-test/simple/ \
+    --index-url=https://console.redhat.com/api/pypi/public-rhai/rhoai/3.5/cuda13.0-ubi9/simple/ \
+    --override /tmp/deps/overrides.txt \
     -r /tmp/deps/requirements.txt
 
 # opencv-python-headless is pulled by vllm + mistral-common but only needed for
@@ -46,10 +48,21 @@ RUN uv pip install --no-cache-dir \
 # Upstream vLLM is making it optional: https://github.com/vllm-project/vllm/issues/40741
 RUN uv pip uninstall opencv-python-headless 2>/dev/null || true
 
-# training-hub from main (post-v0.8.0, includes PR #62 vLLM V1 LoRA fix)
-# TODO: Replace with pinned AIPCC version once a new release is cut
+# Remove tilelang's libcudart stub which shadows the real CUDA runtime in vLLM subprocesses
+RUN rm -f /opt/app-root/lib/python3.12/site-packages/tilelang/lib/libcudart_stub.so \
+ && rm -f /opt/app-root/lib64/python3.12/site-packages/tilelang/lib/libcudart_stub.so
+
+# TEMPORARY: kernels>=0.15 requires version= in LayerRepository but transformers 5.12.1
+# doesn't provide it yet (huggingface/transformers#46291, fixed in PR #46293).
+# Downgrade to 0.14.1 which doesn't enforce this.
+RUN uv pip install --no-cache-dir \
+    --index-url=https://pypi.org/simple/ \
+    "kernels==0.14.1" "kernels-data==0.14.1"
+
+# TEMPORARY: training-hub from fork branch to test vLLM 0.21 subprocess exit fix
 RUN uv pip install --no-cache-dir --no-deps \
-    "training-hub[lora,grpo] @ git+https://github.com/Red-Hat-AI-Innovation-Team/training_hub.git@main"
+    --index-url=https://pypi.org/simple/ \
+    "training-hub @ git+https://github.com/Fiona-Waters/training_hub.git@vllm-fix"
 
 # TEMPORARY: openpipe-art not yet in AIPCC (AIPCC-16172)
 # Remove this step and add to pyproject.toml once AIPCC packages it
@@ -62,6 +75,13 @@ RUN uv pip install --no-cache-dir --no-deps \
 RUN uv pip install --no-cache-dir \
     --index-url=https://pypi.org/simple/ \
     "polars>=1.26.0" "tblib>=3.0.0" "litellm>=1.71.1"
+
+# TEMPORARY: unsloth/unsloth-zoo not yet in AIPCC 3.5 (being re-added)
+# Using opendatahub-io midstream forks with trl 1.x / datasets 5.x compat patches
+# --no-deps: all transitive deps (torch, triton, peft, trl, etc.) already installed above
+RUN uv pip install --no-cache-dir --no-deps \
+    "unsloth-zoo @ git+https://github.com/opendatahub-io/unsloth-zoo.git@v2026.6.7+rhaiv.0" \
+    "unsloth @ git+https://github.com/opendatahub-io/unsloth.git@v2026.6.9+rhaiv.0"
 
 # Fix permissions for OpenShift
 ARG PYTHON_VERSION
@@ -77,9 +97,9 @@ RUN rm -rf /tmp/deps
 ################################################################################
 FROM ${BASE_IMAGE} AS final
 
-LABEL name="universal:th06-cuda130-py312-torch210" \
-      summary="TH06 CUDA 13.0 Python 3.12 image with PyTorch 2.10.0" \
-      description="Universal image combining minimal Jupyter workbench and runtime ML stack (CUDA 13.0, PyTorch 2.10.0, FlashAttention 2.8.3) on UBI9" \
+LABEL name="universal:th06-cuda130-py312-torch211" \
+      summary="TH06 CUDA 13.0 Python 3.12 image with PyTorch 2.11.0" \
+      description="Universal image combining minimal Jupyter workbench and runtime ML stack (CUDA 13.0, PyTorch 2.11.0, FlashAttention 2.8.3, vLLM 0.21.0) on UBI9" \
       io.k8s.display-name="TH06 CUDA 13.0 Python 3.12 (Workbench + Runtime)" \
       io.k8s.description="Universal image: Jupyter workbench by default; runtime when command provided."
 
